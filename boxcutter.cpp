@@ -4,7 +4,7 @@
   Copyright Matt Rasmussen 2008-2011
 
   A simple command line-driven screenshot program
-  
+
 
 =============================================================================*/
 
@@ -53,6 +53,7 @@ OPTIONS\n\
 const char* g_version = "\n\
 boxcutter %s\n\
 Copyright Matt Rasmussen 2008-2011\n\
+Copyright Chanwit Kaewkasi 2013\n\
 ";
 
 const char *g_class_name = "BoxCutter";
@@ -109,15 +110,15 @@ bool capture_screen(const char *filename, int x, int y, int x2, int y2)
     HDC shot_dc = CreateCompatibleDC(screen_dc);
     HBITMAP shot_bitmap =  CreateCompatibleBitmap(screen_dc, w, h);
     HGDIOBJ old_obj = SelectObject(shot_dc, shot_bitmap);
-    
+
     if (!BitBlt(shot_dc, 0, 0, w, h, screen_dc, x, y, SRCCOPY)) {
         printf("error: BitBlt failed\n");
         return false;
     }
-    
+
     // save bitmap to file
     bool ret = false;
-    
+
     int len = strlen(filename);
     if (len > 4 && strcasecmp(filename + len - 4, ".png") == 0) {
         ret = save_png_file(shot_bitmap, shot_dc, filename);
@@ -127,11 +128,11 @@ bool capture_screen(const char *filename, int x, int y, int x2, int y2)
         printf("error: unknown output file format\n");
         ret = false;
     }
-    
+
     DeleteDC(shot_dc);
     DeleteDC(screen_dc);
     SelectObject(shot_dc, old_obj);
-    
+
     return ret;
 }
 
@@ -150,12 +151,12 @@ bool capture_screen_clipboard(HWND hwnd, int x, int y, int x2, int y2)
     HDC shot_dc = CreateCompatibleDC(screen_dc);
     HBITMAP shot_bitmap =  CreateCompatibleBitmap(screen_dc, w, h);
     HGDIOBJ old_obj = SelectObject(shot_dc, shot_bitmap);
-    
+
     if (!BitBlt(shot_dc, 0, 0, w, h, screen_dc, x, y, SRCCOPY)) {
         printf("error: BitBlt failed\n");
         return false;
     }
-    
+
     // save bitmap to clipboard
     bool ret = false;
     if (OpenClipboard(hwnd)) {
@@ -172,18 +173,18 @@ bool capture_screen_clipboard(HWND hwnd, int x, int y, int x2, int y2)
     DeleteDC(shot_dc);
     DeleteDC(screen_dc);
     SelectObject(shot_dc, old_obj);
-    
+
     return ret;
 }
 
 
 //=============================================================================
-// Window class for manual screenshot   
+// Window class for manual screenshot
 
 class BoxCutterWindow
 {
 public:
-    BoxCutterWindow(HINSTANCE hinst, 
+    BoxCutterWindow(HINSTANCE hinst,
                     const char *title, const char* filename) :
         m_active(true),
         m_drag(false),
@@ -194,7 +195,7 @@ public:
         // fill wndclass structure
         WNDCLASS wc;
         strcpy(m_class_name, g_class_name);
-        wc.hInstance = hinst; 
+        wc.hInstance = hinst;
         wc.lpszClassName = m_class_name;
         wc.lpszMenuName = "";
         wc.lpfnWndProc = WindowProc;
@@ -204,23 +205,23 @@ public:
         wc.hbrBackground = 0; //(HBRUSH) GetStockObject(WHITE_BRUSH);
         wc.hCursor = LoadCursor(0, IDC_CROSS);
         wc.hIcon = LoadIcon(0, IDI_APPLICATION);
-        
+
         // register class
         ATOM class_atom = RegisterClass(&wc);
-        
+
         // determine screen dimensions
         RECT rect;
         get_screen_rect(&rect);
-        
+
         // create window
         DWORD exstyle = WS_EX_TRANSPARENT;
         DWORD style = WS_POPUP;
-        
+
         // set this window as the receiver of messages
         g_win = this;
-        
+
         m_handle = CreateWindowEx(exstyle,
-                                  m_class_name, 
+                                  m_class_name,
                                   title,
                                   style,
                                   // dimensions
@@ -230,14 +231,14 @@ public:
                                   hinst, //module_instance,
                                   NULL);
     }
-    
+
     ~BoxCutterWindow()
     {
     }
 
     //===============================
     // functions to manipulate window
-    
+
     void show(bool enabled=true)
     {
         if (enabled)
@@ -245,25 +246,25 @@ public:
         else
             ShowWindow(m_handle, SW_HIDE);
     }
-    
+
     void maximize()
     {
         ShowWindow(m_handle, SW_SHOWMAXIMIZED);
         //UpdateWindow(m_handle);
     }
-    
+
     void activate()
     {
         SetForegroundWindow(m_handle);
         //SwitchToThisWindow(self._handle, False)
     }
-    
-    
+
+
     void close()
     {
         DestroyWindow(m_handle);
-    }    
-    
+    }
+
     //=============================
     // accessors
 
@@ -277,7 +278,7 @@ public:
         return m_handle;
     }
 
-    void get_coords(int *x1, int *y1, int *x2, int *y2) 
+    void get_coords(int *x1, int *y1, int *x2, int *y2)
     {
         *x1 = m_start.x;
         *y1 = m_start.y;
@@ -300,27 +301,35 @@ public:
         // if window is present
         if (g_win) {
             // route message
-        
+
             switch (uMsg) {
-                case WM_DESTROY: 
+                case WM_DESTROY:
                     g_win->close();
                     PostQuitMessage(0);
                     return 0;
-            
+
                 case WM_MOUSEMOVE:
                     g_win->on_mouse_move();
                     return 0;
-                
-                case WM_LBUTTONDOWN: 
+
+                case WM_LBUTTONDOWN:
                     g_win->on_mouse_down();
                     return 0;
-                
+
                 case WM_LBUTTONUP:
                     g_win->on_mouse_up();
                     return 0;
+
+                case WM_KEYDOWN:
+                case WM_KEYUP:
+                    if(wParam == 27) {
+                        g_win->close();
+                        PostQuitMessage(0);
+                    }
+                    return 0;
             }
         }
-        
+
         // perform default action
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
@@ -333,17 +342,17 @@ public:
         m_drag = true;
         GetCursorPos(&m_start);
     }
-    
+
     // mouse button up callback
     void on_mouse_up()
     {
-        
+
         // if drawing has occurred, clean it up
         if (m_draw) {
             // cleanup rectangle on desktop
             m_drag = false;
             m_draw = false;
-            
+
             HDC hdc = CreateDC("DISPLAY", NULL, NULL, NULL);
             SetROP2(hdc, R2_NOTXORPEN);
             Rectangle(hdc, m_start.x, m_start.y, m_end.x, m_end.y);
@@ -351,42 +360,42 @@ public:
 
             m_have_coords = true;
         }
-        
+
         // stop BoxCutter window
         m_active = false;
     }
-    
+
     // callback for mouse movement
     void on_mouse_move()
     {
         // get current mouse coordinates
         POINT pos;
         GetCursorPos(&pos);
-        
+
         // if mouse is down, process drag
         if (m_drag) {
             HDC hdc = CreateDC("DISPLAY", NULL, NULL, NULL);
             SetROP2(hdc, R2_NOTXORPEN);
-            
+
             // erase old rectangle
             if (m_draw) {
                 Rectangle(hdc, m_start.x, m_start.y, m_end.x, m_end.y);
             }
-            
+
             // draw new rectangle
             m_draw = true;
             Rectangle(hdc, m_start.x, m_start.y, pos.x, pos.y);
             m_end = pos;
-            
+
             DeleteDC(hdc);
         }
     }
 
 
-private:    
+private:
     char m_class_name[101];
     HWND m_handle;
-    
+
     bool m_active;
     bool m_drag;
     bool m_draw;
@@ -422,7 +431,7 @@ int main_loop(BoxCutterWindow* win)
             // error occurred
             break;
         }
-        
+
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -440,30 +449,30 @@ bool setup_console()
 
     // create a console
     if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
-        // if no parent console then give up        
+        // if no parent console then give up
         return false;
     }
-    
-    
+
+
 	const unsigned int MAX_CONSOLE_LINES = 500;
 	// set the screen buffer to be big enough to let us scroll text
 	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE),	&coninfo);
 	coninfo.dwSize.Y = MAX_CONSOLE_LINES;
 	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),	coninfo.dwSize);
 
-    
+
 	// redirect unbuffered STDOUT to the console
-	lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);    
+	lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
 	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
-	fp = _fdopen(hConHandle, "w");    
+	fp = _fdopen(hConHandle, "w");
     if (!fp) {
         // could not open stdout
         return false;
     }
 	*stdout = *fp;
 	setvbuf(stdout, NULL, _IONBF, 0);
-    
-    
+
+
 	// redirect unbuffered STDIN to the console
 	lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
 	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
@@ -475,7 +484,7 @@ bool setup_console()
 	*stdin = *fp;
 	setvbuf(stdin, NULL, _IONBF, 0);
 
-    
+
 	// redirect unbuffered STDERR to the console
 	lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
 	hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
@@ -506,14 +515,14 @@ int main(int argc, char **argv)
 
     InitCommonControls();
     setup_console();
-    
+
     // default screenshot filename
     char *filename = NULL;
 
     // coordinates
     bool use_coords = false;
     int x1, y1, x2, y2;
-    
+
     // parse command line
     int i;
 
@@ -524,7 +533,7 @@ int main(int argc, char **argv)
             break;
 
         else if (strcmp(argv[i], "-f") == 0 ||
-                 strcmp(argv[i], "--fullscreen") == 0) 
+                 strcmp(argv[i], "--fullscreen") == 0)
         {
             RECT rect;
             get_screen_rect(&rect);
@@ -534,25 +543,25 @@ int main(int argc, char **argv)
             y2 = rect.bottom;
             use_coords = true;
         }
-        
+
         else if (strcmp(argv[i], "-c") == 0 ||
-                 strcmp(argv[i], "--coords") == 0) 
+                 strcmp(argv[i], "--coords") == 0)
         {
             if (i+1 >= argc) {
                 printf("error: expected argument for -c,--coord\n");
                 usage();
                 return 1;
             }
-            
+
             if (sscanf(argv[++i], "%d,%d,%d,%d", &x1, &y1, &x2, &y2) != 4) {
                 printf("error: expected 4 comma separated integers\n");
                 usage();
                 return 1;
             }
-            
+
             use_coords = true;
         }
-        
+
         else if (strcmp(argv[i], "-v") == 0 ||
                  strcmp(argv[i], "--version") == 0)
         {
@@ -575,7 +584,7 @@ int main(int argc, char **argv)
             return 1;
         }
     }
-    
+
     // argument after options is a filename
     if (i < argc)
         filename = argv[i];
@@ -584,7 +593,7 @@ int main(int argc, char **argv)
 
     // create screenshot window
     BoxCutterWindow win(hInstance, "BoxCutter", filename);
-    
+
 
     if (use_coords) {
         win.show();
@@ -593,7 +602,7 @@ int main(int argc, char **argv)
         win.show();
         win.maximize();
         win.activate();
-        
+
         main_loop(&win);
         if (win.have_coords()) {
             win.get_coords(&x1, &y1, &x2, &y2);
@@ -612,7 +621,7 @@ int main(int argc, char **argv)
         // save to file
         if (!capture_screen(filename, x1, y1, x2, y2))
         {
-            MessageBox(win.get_handle(), "Cannot save screenshot", 
+            MessageBox(win.get_handle(), "Cannot save screenshot",
                        "Error", MB_OK);
             return 1;
         }
@@ -622,7 +631,7 @@ int main(int argc, char **argv)
         // save to clipboard
         if (!capture_screen_clipboard(win.get_handle(), x1, y1, x2, y2))
         {
-            MessageBox(win.get_handle(), "Cannot save screenshot to clipboard", 
+            MessageBox(win.get_handle(), "Cannot save screenshot to clipboard",
                        "Error", MB_OK);
             return 1;
         }
@@ -631,7 +640,7 @@ int main(int argc, char **argv)
     }
 
     win.close();
-    
+
     return 0;
 }
 

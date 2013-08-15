@@ -23,15 +23,15 @@ public:
     // Playback a metafile from a HMETAFILE
     // If deleteWmf is TRUE, then when the metafile is deleted,
     // the hWmf will also be deleted.  Otherwise, it won't be.
-    
+
     Metafile(IN HMETAFILE                      hWmf,
              IN const WmfPlaceableFileHeader * wmfPlaceableFileHeader,
              IN BOOL                           deleteWmf = FALSE)
     {
         GpMetafile *    metafile = NULL;
 
-        lastResult = DllExports::GdipCreateMetafileFromWmf(hWmf, deleteWmf, 
-                                                           wmfPlaceableFileHeader, 
+        lastResult = DllExports::GdipCreateMetafileFromWmf(hWmf, deleteWmf,
+                                                           wmfPlaceableFileHeader,
                                                            &metafile);
 
         SetNativeImage(metafile);
@@ -40,13 +40,13 @@ public:
     // Playback a metafile from a HENHMETAFILE
     // If deleteEmf is TRUE, then when the metafile is deleted,
     // the hEmf will also be deleted.  Otherwise, it won't be.
-    
+
     Metafile(IN HENHMETAFILE hEmf,
              IN BOOL deleteEmf = FALSE)
     {
         GpMetafile *    metafile = NULL;
 
-        lastResult = DllExports::GdipCreateMetafileFromEmf(hEmf, deleteEmf, 
+        lastResult = DllExports::GdipCreateMetafileFromEmf(hEmf, deleteEmf,
                                                            &metafile);
 
         SetNativeImage(metafile);
@@ -56,7 +56,7 @@ public:
     {
         GpMetafile *    metafile = NULL;
 
-        lastResult = DllExports::GdipCreateMetafileFromFile(filename, 
+        lastResult = DllExports::GdipCreateMetafileFromFile(filename,
                                                             &metafile);
 
         SetNativeImage(metafile);
@@ -70,8 +70,8 @@ public:
     {
         GpMetafile *    metafile = NULL;
 
-        lastResult = DllExports::GdipCreateMetafileFromWmfFile(filename, 
-                                                               wmfPlaceableFileHeader, 
+        lastResult = DllExports::GdipCreateMetafileFromWmfFile(filename,
+                                                               wmfPlaceableFileHeader,
                                                                &metafile);
 
         SetNativeImage(metafile);
@@ -81,7 +81,7 @@ public:
     {
         GpMetafile *    metafile = NULL;
 
-        lastResult = DllExports::GdipCreateMetafileFromStream(stream, 
+        lastResult = DllExports::GdipCreateMetafileFromStream(stream,
                                                               &metafile);
 
         SetNativeImage(metafile);
@@ -253,7 +253,7 @@ public:
         )
     {
         return DllExports::GdipGetMetafileHeaderFromWmf(hWmf,
-                                                        wmfPlaceableFileHeader, 
+                                                        wmfPlaceableFileHeader,
                                                         header);
     }
 
@@ -299,7 +299,7 @@ public:
         HENHMETAFILE hEmf;
 
         SetStatus(DllExports::GdipGetHemfFromMetafile(
-                                  (GpMetafile *)nativeImage, 
+                                  (GpMetafile *)nativeImage,
                                   &hEmf));
 
         return hEmf;
@@ -308,7 +308,7 @@ public:
     // Used in conjuction with Graphics::EnumerateMetafile to play an EMF+
     // The data must be DWORD aligned if it's an EMF or EMF+.  It must be
     // WORD aligned if it's a WMF.
-    
+
     Status PlayRecord(
         IN EmfPlusRecordType   recordType,
         IN UINT                flags,
@@ -328,7 +328,7 @@ public:
     // metafile rasterized at screen resolution, then use this API to set
     // the rasterization dpi of the metafile to the screen resolution,
     // e.g. 96 dpi or 120 dpi.
-    
+
     Status SetDownLevelRasterizationLimit(
         IN UINT     metafileRasterizationLimitDpi
         )
@@ -350,7 +350,7 @@ public:
         return metafileRasterizationLimitDpi;
     }
 
-    static UINT Metafile::EmfToWmfBits(
+    static UINT EmfToWmfBits(
         IN HENHMETAFILE       hemf,
         IN UINT               cbData16,
         IN LPBYTE             pData16,
