@@ -17,7 +17,7 @@ CC=c:/mingw/bin/g++
 
 WWW = /var/www/dev/rasm/boxcutter/download
 
-CFLAGS=-mwindows -lcomctl32 -lgdi32 -I/usr/include/wine/msvcrt -Lgdi -lgdiplus
+CFLAGS=-static -mwindows -lcomctl32 -lgdi32 -I/usr/include/wine/msvcrt -Lgdi -lgdiplus -O2
 
 all: boxcutter.exe boxcutter-fs.exe
 
